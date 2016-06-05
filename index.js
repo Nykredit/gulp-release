@@ -28,18 +28,18 @@ module.exports = function (options) {
         options.bumpVersion = options.release;
     }
 
-    function gitCmd(cb, version, params, path) {
+    function gitCmd(cb, version, params, cmdOpts) {
         var cmdGit, stdout = '', stderr = '';
         if (options.debug) {
-            gutil.log(gutil.colors.yellow('Processing git command: git '  + params.join(' ')));
-        }    
-        
-        if (path == null) {
-            cmdGit = spawn('git', params);    
-        } else {
-            cmdGit = spawn('git', params, path);
+            gutil.log(gutil.colors.yellow('Processing git command: git ' + params.join(' ')));
         }
-        
+
+        if (cmdOpts == null) {
+            cmdGit = spawn('git', params);
+        } else {
+            cmdGit = spawn('git', params, cmdOpts);
+        }
+
         cmdGit.stdout.on('data', function (buf) {
             stdout += buf;
         });
@@ -47,18 +47,18 @@ module.exports = function (options) {
             stderr += buf;
         });
         cmdGit.on('close', function (code) {
-            if (stdout != '' && options.debug) {
+            if (stdout !== '' && options.debug) {
                 gutil.log(gutil.colors.yellow(stdout));
             }
-            
+
             if (code !== 0) {
                 cb('git push exited with code ' + code + ' [stderr]: ' + stderr);
             } else {
                 cb(null, version);
-            }                    
-        });        
+            }
+        });
     }
-    
+
     return through.obj(function (file, enc, callback) {
         var p = path.normalize(path.relative(file.cwd, file.path));
         self = this;
@@ -75,7 +75,7 @@ module.exports = function (options) {
     function (callback) {
         async.waterfall([
             function getVersionTag(cb) {
-                var bowerJson, packageJson, version, cmdRevParse, sha1,
+                var bowerJson, packageJson, version, cmdRevParse, sha1, stderr = '',
                     preReleaseVersion = 'build.' + process.env.BUILD_NUMBER || 'beta';
 
                 if (fs.existsSync('bower.json')) {
@@ -95,16 +95,14 @@ module.exports = function (options) {
 
                 if (!options.release) {
                     cmdRevParse = spawn('git', ['rev-parse', '--short', 'HEAD']);
-                    
+
                     gutil.log(gutil.colors.yellow('Fetching SHA hashes'));
 
-                    var stderr = '';
-                    
-                    cmdRevParse.stdout.on('data', function(data) {
+                    cmdRevParse.stdout.on('data', function (data) {
                         sha1 = data.toString().trim();
                     });
-                    
-                    cmdRevParse.stderr.on('data', function(buf) {
+
+                    cmdRevParse.stderr.on('data', function (buf) {
                         stderr += buf;
                     });
 
@@ -120,10 +118,9 @@ module.exports = function (options) {
                 }
             },
             function cloneDistributionRepository(version, cb) {
+                var params = ['clone', '-b', 'master', '--single-branch', options.repository, repoPath];
                 gutil.log(gutil.colors.yellow('Cloning distribution repository ' + options.repository));
-                var params = ['clone', '-b', 'master', '--single-branch', options.repository, repoPath]; 
                 gitCmd(cb, version, params);
-
             },
             function removeExistingFiles(version, cb) {
                 var clean = function (folder) {
@@ -190,34 +187,29 @@ module.exports = function (options) {
                 cb(null, version);
             },
             function addDistributionFiles(version, cb) {
+                var params = ['add', '--all', '.'], cmdOpts = { cwd: repoPath };
                 gutil.log(gutil.colors.yellow('Adding files to distribution repository'));
-                
-                var params = ['add', '--all', '.']; 
-                var path = { cwd: repoPath };
-                gitCmd(cb, version, params, path);
+                gitCmd(cb, version, params, cmdOpts);
             },
             function commitDistributionFiles(version, cb) {
-                var message = (options.release ? 'Release ' : 'Pre-release ') + version
+                var message = (options.release ? 'Release ' : 'Pre-release ') + version,
+                    params = ['commit', '-m', message],
+                    cmdOpts = { cwd: repoPath };
+
                 gutil.log(gutil.colors.yellow('Committing files to distribution repository'));
-                
-                var params = ['commit', '-m', message]; 
-                var path = { cwd: repoPath };
-                gitCmd(cb, version, params, path);
+                gitCmd(cb, version, params, cmdOpts);
             },
             function tagDistributionFiles(version, cb) {
-                var message = options.release ? 'Release' : 'Pre-release'
+                var message = options.release ? 'Release' : 'Pre-release',
+                    params = ['tag', '-f', 'v' + version, '-m', message],
+                    cmdOpts = { cwd: repoPath };
                 gutil.log(gutil.colors.yellow('Tagging files to distribution repository'));
-                
-                var params = ['tag', '-f', 'v' + version, '-m', message]; 
-                var path = { cwd: repoPath };
-                gitCmd(cb, version, params, path);
+                gitCmd(cb, version, params, cmdOpts);
             },
             function pushDistributionFiles(version, cb) {
+                var params = ['push', '--tags', 'origin', 'master'], cmdOpts = { cwd: repoPath };
                 gutil.log(gutil.colors.yellow('Pushing files to distribution repository'));
-
-                var params = ['push', '--tags', 'origin', 'master']; 
-                var path = { cwd: repoPath };
-                gitCmd(cb, version, params, path);
+                gitCmd(cb, version, params, cmdOpts);
             },
             function removeDistributionRepository(version, cb) {
                 gutil.log(gutil.colors.yellow('Removing local distribution repository clone'));
@@ -230,10 +222,9 @@ module.exports = function (options) {
                 });
             },
             function tagRelease(version, cb) {
+                var params = ['tag', '-f', 'v' + version, '-m', 'Release'];
                 if (options.release) {
                     gutil.log(gutil.colors.yellow('Tagging source files'));
-                    
-                    var params = ['tag', '-f', 'v' + version, '-m', 'Release']; 
                     gitCmd(cb, version, params);
                 } else {
                     gutil.log(gutil.colors.yellow('Not tagging source files - not a release'));
@@ -261,7 +252,7 @@ module.exports = function (options) {
                 cb(null, version);
             },
             function addFiles(version, cb) {
-                var versionFiles = [], cmdAdd;
+                var params, versionFiles = [];
                 if (options.bumpVersion) {
                     gutil.log(gutil.colors.yellow('Adding versioned files to repository'));
                     if (fs.existsSync('bower.json')) {
@@ -270,35 +261,30 @@ module.exports = function (options) {
                     if (fs.existsSync('package.json')) {
                         versionFiles.push('package.json');
                     }
-
-                    var params = ['add'].concat(versionFiles); 
+                    params = ['add'].concat(versionFiles);
                     gitCmd(cb, version, params);
                 } else {
                     cb(null, version);
                 }
             },
             function commitFiles(version, cb) {
-                var cmdCommit;
+                var params = ['commit', '-m', '[gulp] Bumping version'];
                 if (options.bumpVersion) {
                     gutil.log(gutil.colors.yellow('Committing files to repository'));
-                    
-                    var params = ['commit', '-m', '[gulp] Bumping version']; 
                     gitCmd(cb, version, params);
                 } else {
                     cb(null, version);
                 }
             },
             function pushFiles(version, cb) {
-                var cmdPush;
+                var params = ['push', '--tags', '--force', 'origin', 'master'];
                 if (options.bumpVersion) {
                     gutil.log(gutil.colors.yellow('Pushing files to repository'));
-
-                    var params = ['push', '--tags', '--force', 'origin', 'master']; 
                     gitCmd(cb, version, params);
                 } else {
                     cb(null, version);
                 }
-            }          
+            }
         ], function (err) {
             if (err) {
                 switch (err) {
