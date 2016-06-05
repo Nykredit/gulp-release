@@ -29,6 +29,7 @@ gulp.task('pre-release', function() {
         .pipe(release({
             prefix: 'target/dist',
             release: false,
+            debug: false,
             repository: 'https://github.com/langecode/bower-module.git'
         }));
 });
@@ -46,6 +47,7 @@ gulp.task('release', function() {
         .pipe(release({
             prefix: 'target/dist',
             release: true,
+            debug: false,
             repository: 'https://github.com/langecode/bower-module.git'
         }));
 });
@@ -60,6 +62,7 @@ If you do not want to bump the patch version, you can set the `bumpVersion` flag
         .pipe(release({
             prefix: 'target/dist',
             release: true,
+            debug: false,
             repository: 'https://github.com/langecode/bower-module.git',
             bumpVersion: false
         }));
@@ -68,3 +71,6 @@ If you do not want to bump the patch version, you can set the `bumpVersion` flag
 This is useful if your project calls the plugin more than once, e.g. because you are releasing both a Bower component and an application.
 
 If `bumpVersion` is not specified, it will default to `false` for pre-releases and `true` for releases.
+
+If `debug` is not specified, it will default to `false` for both pre-releases and for releases. By settings `debug` to true, 
+stdout from git cmd calls will be printed to the console.
