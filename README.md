@@ -54,7 +54,9 @@ gulp.task('release', function() {
 ```
 
 Setting the release flag to true causes the plugin to tag the source repository and bump the patch version of the
-bower.json and package.json files in the source repository.
+bower.json and package.json files in the source repository. If the repository contains additional package files that 
+needs version bumping, these can be specified with the `additionalPackageFiles` option. Note that the version on 
+additional package files will be based on the root package version.
 
 If you do not want to bump the patch version, you can set the `bumpVersion` flag to `false`:
 
@@ -63,6 +65,7 @@ If you do not want to bump the patch version, you can set the `bumpVersion` flag
             prefix: 'target/dist',
             release: true,
             debug: false,
+            additionalPackageFiles: ['src/package.json'],
             repository: 'https://github.com/langecode/bower-module.git',
             bumpVersion: false
         }));

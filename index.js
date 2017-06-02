@@ -21,8 +21,9 @@ module.exports = function (options) {
         debug: false,
         prefix: '',
         release: false,
+        additionalPackageFiles: [],
         repository: ''
-    }, options);
+            }, options);
     options.prefix = options.prefix.replace('/', path.sep);
     if (options.bumpVersion === undefined) {
         options.bumpVersion = options.release;
@@ -176,6 +177,18 @@ module.exports = function (options) {
                     packageJson = JSON.parse(fs.readFileSync(packageFile));
                     packageJson.version = version;
                     fs.writeFileSync(packageFile, JSON.stringify(packageJson, null, '    '));
+                }
+
+                if (options.additionalPackageFiles && Array.isArray(options.additionalPackageFiles)) {
+                    options.additionalPackageFiles.forEach(function (additionalFile) {
+                        var additionalPackageFile = path.join(repoPath, additionalFile),
+                            additionalPackageJson;
+                        if (fs.existsSync(additionalPackageFile)) {
+                            additionalPackageJson = JSON.parse(fs.readFileSync(additionalPackageFile));
+                            additionalPackageJson.version = version;
+                            fs.writeFileSync(additionalPackageFile, JSON.stringify(additionalPackageJson, null, '    '));
+                        }
+                    });
                 }
 
                 if (!fs.existsSync(bowerFile) && !fs.existsSync(packageFile)) {
