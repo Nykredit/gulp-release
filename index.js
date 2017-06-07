@@ -179,18 +179,6 @@ module.exports = function (options) {
                     fs.writeFileSync(packageFile, JSON.stringify(packageJson, null, '    '));
                 }
 
-                if (options.additionalPackageFiles && Array.isArray(options.additionalPackageFiles)) {
-                    options.additionalPackageFiles.forEach(function (additionalFile) {
-                        var additionalPackageFile = path.join(repoPath, additionalFile),
-                            additionalPackageJson;
-                        if (fs.existsSync(additionalPackageFile)) {
-                            additionalPackageJson = JSON.parse(fs.readFileSync(additionalPackageFile));
-                            additionalPackageJson.version = version;
-                            fs.writeFileSync(additionalPackageFile, JSON.stringify(additionalPackageJson, null, '    '));
-                        }
-                    });
-                }
-
                 if (!fs.existsSync(bowerFile) && !fs.existsSync(packageFile)) {
                     fs.writeFileSync(path.join(repoPath, 'version.json'), JSON.stringify(versionJson, null, '    '));
                 }
@@ -260,6 +248,17 @@ module.exports = function (options) {
                         packageJson = JSON.parse(fs.readFileSync(packageFile));
                         packageJson.version = nextRelease;
                         fs.writeFileSync(packageFile, JSON.stringify(packageJson, null, '    '));
+                    }
+                    if (options.additionalPackageFiles && Array.isArray(options.additionalPackageFiles)) {
+                        options.additionalPackageFiles.forEach(function (additionalFile) {
+                            var additionalPackageFile = path.join(repoPath, additionalFile),
+                                additionalPackageJson;
+                            if (fs.existsSync(additionalPackageFile)) {
+                                additionalPackageJson = JSON.parse(fs.readFileSync(additionalPackageFile));
+                                additionalPackageJson.version = version;
+                                fs.writeFileSync(additionalPackageFile, JSON.stringify(additionalPackageJson, null, '    '));
+                            }
+                        });
                     }
                 }
                 cb(null, version);
