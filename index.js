@@ -251,12 +251,11 @@ module.exports = function (options) {
                     }
                     if (options.additionalPackageFiles && Array.isArray(options.additionalPackageFiles)) {
                         options.additionalPackageFiles.forEach(function (additionalFile) {
-                            var additionalPackageFile = path.join(repoPath, additionalFile),
-                                additionalPackageJson;
-                            if (fs.existsSync(additionalPackageFile)) {
-                                additionalPackageJson = JSON.parse(fs.readFileSync(additionalPackageFile));
-                                additionalPackageJson.version = version;
-                                fs.writeFileSync(additionalPackageFile, JSON.stringify(additionalPackageJson, null, '    '));
+                            var additionalPackageJson;
+                            if (fs.existsSync(additionalFile)) {
+                                additionalPackageJson = JSON.parse(fs.readFileSync(additionalFile));
+                                additionalPackageJson.version = nextRelease;
+                                fs.writeFileSync(additionalFile, JSON.stringify(additionalPackageJson, null, '    '));
                             }
                         });
                     }
