@@ -273,6 +273,11 @@ module.exports = function (options) {
                     if (fs.existsSync('package.json')) {
                         versionFiles.push('package.json');
                     }
+                    if (options.additionalPackageFiles && Array.isArray(options.additionalPackageFiles)) {
+                        options.additionalPackageFiles.forEach(function (additionalFile) {
+                            versionFiles.push(additionalFile);
+                        });
+                    }
                     params = ['add'].concat(versionFiles);
                     gitCmd(cb, version, params);
                 } else {
