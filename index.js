@@ -22,6 +22,10 @@ module.exports = function (options) {
         prefix: '',
         release: false,
         additionalPackageFiles: [],
+        npm: {
+            registry: '',
+            publish: false
+        },
         repository: ''
             }, options);
     options.prefix = options.prefix.replace('/', path.sep);
@@ -55,6 +59,40 @@ module.exports = function (options) {
             if (code !== 0) {
                 cb('git push exited with code ' + code + ' [stderr]: ' + stderr);
             } else {
+                cb(null, version);
+            }
+        });
+    }
+
+    function npmPublish(cb, options, registry) {
+        var cmdNpm, stdout = '', stderr = '', args = [];
+
+        if (options.debug) {
+            gutil.log(gutil.colors.yellow('Publishing ' + options.prefix + ' to ' + options.npm.registry));
+        }
+
+        if (options.npm.registry) {
+            args.push('publish', '--registry', options.npm.registry, options.prefix);
+        } else {
+            args.push('publish', options.prefix);
+        }
+        cmdNpm = spawn('npm', args);
+
+        cmdNpm.stdout.on('data', function (buf) {
+            stdout += buf;
+        });
+        cmdNpm.stderr.on('data', function (buf) {
+            stderr += buf;
+        });
+        cmdNpm.on('close', function (code) {
+            if (stdout !== '' && options.debug) {
+                gutil.log(gutil.colors.yellow(stdout));
+            }
+
+            if (code !== 0) {
+                cb('npm publish exited with code ' + code + ' [stderr]: ' + stderr);
+            } else {
+                gutil.log(gutil.colors.yellow('Published ' + options.prefix + ' to ' + options.npm.registry));
                 cb(null, version);
             }
         });
@@ -297,6 +335,13 @@ module.exports = function (options) {
                 if (options.bumpVersion) {
                     gutil.log(gutil.colors.yellow('Pushing files to repository'));
                     gitCmd(cb, version, params);
+                } else {
+                    cb(null, version);
+                }
+            },
+            function publishNpm(version, cb) {
+                if (options.release && options.npm && options.npm.publish) {
+                    npmPublish(cb);
                 } else {
                     cb(null, version);
                 }

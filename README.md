@@ -77,3 +77,21 @@ If `bumpVersion` is not specified, it will default to `false` for pre-releases a
 
 If `debug` is not specified, it will default to `false` for both pre-releases and for releases. By settings `debug` to true, 
 stdout from git cmd calls will be printed to the console.
+
+The plugin also support publishing to a npm registry when releasing a new version. Specify the `npm.registry` and whether to 
+`publish`.
+
+```javascript
+        .pipe(release({
+            prefix: 'target/dist',
+            release: true,
+            additionalPackageFiles: ['src/package.json'],
+            npm: {
+                registry: 'https://registry.npmjs.org',
+                publish: true
+            },
+            repository: 'https://github.com/user/bower-module.git',
+        }));
+```
+
+If `npm.registry` is not specified, the local .npmrc configuration will be used instead.  
