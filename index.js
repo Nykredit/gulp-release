@@ -64,7 +64,7 @@ module.exports = function (options) {
         });
     }
 
-    function npmPublish(cb, options, registry) {
+    function npmPublish(cb, version) {
         var cmdNpm, stdout = '', stderr = '', args = [];
 
         if (options.debug) {
@@ -341,7 +341,7 @@ module.exports = function (options) {
             },
             function publishNpm(version, cb) {
                 if (options.release && options.npm && options.npm.publish) {
-                    npmPublish(cb);
+                    npmPublish(cb, version);
                 } else {
                     cb(null, version);
                 }
