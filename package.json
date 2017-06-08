@@ -1,11 +1,12 @@
 {
     "name": "gulp-git-release",
     "version": "1.0.12",
-    "description": "Plugin for gulp to allow pre-releases and releases into git repository",
+    "description": "Plugin for gulp to allow pre-releases and releases into git repository, as well publishing to npm",
     "repository": {
         "type": "git",
         "url": "https://github.com/Nykredit/gulp-release.git"
     },
+    "keywords": ["gulp", "git", "publish", "npm", "release", "prerelase"],
     "dependencies": {
         "async": "~1.4.2",
         "gulp-util": "~3.0.4",
