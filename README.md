@@ -1,4 +1,8 @@
-gulp-git-release
+gulp-git-release - OBSOLETE
+
+## Obsolete notice
+
+This project is obsolete.
 ================
 
 > Do pre-releases and releases of gulp based projects into Git repository.
